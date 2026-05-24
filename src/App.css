@@ -13,33 +13,39 @@
 
 /* ヘッダー */
 .header {
-  padding: 20px 0 0;
-  border-bottom: 1px solid var(--border);
+  padding: 16px 0 12px;
 }
 
 .logo {
   font-size: 22px;
   font-weight: 700;
   color: var(--accent);
-  margin: 0 0 16px;
+  margin: 0;
   letter-spacing: 0.02em;
 }
 
-.tabs {
+/* ボトムナビ */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
-  gap: 4px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 50;
 }
 
 .tab {
   flex: 1;
-  padding: 10px 0;
+  padding: 14px 0 12px;
   border: none;
   background: none;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.15s;
 }
 
 .tab:hover {
@@ -48,14 +54,13 @@
 
 .tab.active {
   color: var(--accent);
-  border-bottom-color: var(--accent);
   font-weight: 600;
 }
 
 /* メイン */
 .main {
   flex: 1;
-  padding: 24px 0;
+  padding: 16px 0 calc(60px + env(safe-area-inset-bottom));
 }
 
 .pane {
@@ -168,6 +173,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.list-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .list-count {
@@ -485,6 +496,29 @@
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+}
+
+.modal-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-archive {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  background: none;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-archive:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .btn-danger {

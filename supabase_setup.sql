@@ -33,3 +33,7 @@ create policy "allow_all" on memos
 -- anonロールにテーブル権限を付与
 grant all on table memos to anon;
 grant all on table memos to authenticated;
+
+-- archivedカラム追加（マイグレーション）
+-- Supabaseのダッシュボード > SQL Editor で実行すること
+alter table memos add column if not exists archived boolean not null default false;

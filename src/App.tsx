@@ -68,6 +68,7 @@ export default function App() {
   const [memos, setMemos] = useState<Memo[]>([])
   const [loadingList, setLoadingList] = useState(false)
   const [filterTags, setFilterTags] = useState<string[]>([])
+  const [showArchived, setShowArchived] = useState(false)
   const displayedMemos = filterTags.length > 0 ? memos.filter(m => filterTags.every(t => m.tags.includes(t))) : memos
 
   function toggleFilterTag(tag: string) {
@@ -107,6 +108,14 @@ export default function App() {
     fetchMemos()
   }
 
+  async function handleArchive() {
+    if (!selectedMemo) return
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    await supabase.from('memos').update({ archived: true }).eq('id', selectedMemo.id)
+    closeModal()
+    fetchMemos()
+  }
+
   useEffect(() => {
     if (!selectedMemo) return
     if (isModalFirstRender.current) {
@@ -137,13 +146,15 @@ export default function App() {
 
   const fetchMemos = useCallback(async () => {
     setLoadingList(true)
-    const { data, error } = await supabase
+    const query = supabase
       .from('memos')
       .select('*')
+      .eq('archived', showArchived)
       .order('created_at', { ascending: false })
+    const { data, error } = await query
     setLoadingList(false)
     if (!error && data) setMemos(data as Memo[])
-  }, [])
+  }, [showArchived])
 
   useEffect(() => {
     if (tab === 'list') fetchMemos()
@@ -231,11 +242,6 @@ export default function App() {
     <div className="app">
       <header className="header">
         <h1 className="logo">Tsumugi</h1>
-        <nav className="tabs">
-          <button className={tab === 'write' ? 'tab active' : 'tab'} onClick={() => setTab('write')}>書く</button>
-          <button className={tab === 'list' ? 'tab active' : 'tab'} onClick={() => setTab('list')}>一覧</button>
-          <button className={tab === 'search' ? 'tab active' : 'tab'} onClick={() => setTab('search')}>探す</button>
-        </nav>
       </header>
 
       <main className="main">
@@ -276,9 +282,15 @@ export default function App() {
             )}
             <div className="list-header">
               <span className="list-count">{displayedMemos.length} 件</span>
-              <button className="btn-secondary" onClick={fetchMemos} disabled={loadingList}>
-                {loadingList ? '読込中...' : '更新'}
-              </button>
+              <div className="list-header-actions">
+                <button
+                  className={showArchived ? 'mode-btn active' : 'mode-btn'}
+                  onClick={() => { setShowArchived(v => !v); setFilterTags([]) }}
+                >完了済み</button>
+                <button className="btn-secondary" onClick={fetchMemos} disabled={loadingList}>
+                  {loadingList ? '読込中...' : '更新'}
+                </button>
+              </div>
             </div>
             {loadingList && <p className="loading">読み込み中...</p>}
             {!loadingList && displayedMemos.length === 0 && <p className="empty">メモがありません</p>}
@@ -359,6 +371,12 @@ export default function App() {
         )}
       </main>
 
+      <nav className="bottom-nav">
+        <button className={tab === 'write' ? 'tab active' : 'tab'} onClick={() => setTab('write')}>書く</button>
+        <button className={tab === 'list' ? 'tab active' : 'tab'} onClick={() => setTab('list')}>一覧</button>
+        <button className={tab === 'search' ? 'tab active' : 'tab'} onClick={() => setTab('search')}>探す</button>
+      </nav>
+
       {selectedMemo && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
@@ -387,7 +405,12 @@ export default function App() {
             />
             <div className="modal-footer">
               <button className="btn-danger" onClick={handleModalDelete}>削除</button>
-              <button className="btn-secondary" onClick={closeModal}>閉じる</button>
+              <div className="modal-footer-right">
+                {!selectedMemo.archived && (
+                  <button className="btn-archive" onClick={handleArchive}>完了済みにする</button>
+                )}
+                <button className="btn-secondary" onClick={closeModal}>閉じる</button>
+              </div>
             </div>
           </div>
         </div>
