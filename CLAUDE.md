@@ -77,14 +77,14 @@ tsumugi/
 ```
 VITE_SUPABASE_URL=https://nnvzyicyuupukybylbql.supabase.co
 VITE_SUPABASE_ANON_KEY=（Supabase Publishableキー）
-VITE_ANTHROPIC_API_KEY=（AnthropicのAPIキー）
+ANTHROPIC_API_KEY=（AnthropicのAPIキー）  ← VITE_プレフィックスなし（サーバー側専用）
 ```
 
 ### Vercel（本番）
 ```
 VITE_SUPABASE_URL=設定済み
 VITE_SUPABASE_ANON_KEY=設定済み
-VITE_ANTHROPIC_API_KEY=未設定（セキュリティリスクのため保留）
+ANTHROPIC_API_KEY=要追加（Edge Function内でのみ参照）
 ```
 
 ---
@@ -116,10 +116,10 @@ updated_at  timestamptz default now()
 | 機能 | 内容 |
 |---|---|
 | メモ保存 | タイトル＋本文をSupabaseに保存 |
-| 自動タグ付け | 保存時にClaude APIが日本語タグを5〜8個生成（ローカルのみ） |
+| 自動タグ付け | 保存時にClaude APIが日本語タグを5〜8個生成（Edge Function経由・本番でも動作） |
 | 未タグ自動補完 | PCブラウザ起動時にtags:[]のメモを一括タグ付け（iPhoneで書いたメモに後からタグをつける） |
 | キーワード検索 | タイトル・本文のilike検索 |
-| AIセマンティック検索 | 自然文でClaudeが意味的に関連するメモを順位付けして返す（ローカルのみ） |
+| AIセマンティック検索 | 自然文でClaudeが意味的に関連するメモを順位付けして返す（Edge Function経由・本番でも動作） |
 | 一覧表示 | 新着順・タグ表示 |
 | PWA対応 | iPhoneのホーム画面に追加可能（vite-plugin-pwa・Appleメタタグ・アイコン設定済み） |
 | メモ詳細表示・自動保存 | 一覧からメモをクリックしてモーダルで全文表示・編集（1.5秒デバウンスで自動保存） |
@@ -132,8 +132,8 @@ updated_at  timestamptz default now()
 
 | 端末 | できること |
 |---|---|
-| iPhone（本番Vercel） | メモを書いて保存するだけ（APIキー未設定のためタグ付け・AI検索は動かない） |
-| PC（localhost/.env.local） | 全機能が使える（タグ付け・未タグ補完・AIセマンティック検索） |
+| iPhone（本番Vercel） | 全機能が使える（Edge Function経由でタグ付け・AI検索も動作） |
+| PC（vercel dev） | 全機能が使える（Edge Function + Vite をローカルで同時起動） |
 
 ---
 
@@ -141,7 +141,7 @@ updated_at  timestamptz default now()
 
 | 項目 | 対応方針 |
 |---|---|
-| AI機能が本番で動かない | Vercel Edge Functionsへ移行（将来） |
+| ~~AI機能が本番で動かない~~ | Vercel Edge Functions実装済み（/api/tag・/api/search）|
 
 ---
 
@@ -151,7 +151,7 @@ updated_at  timestamptz default now()
 なし（数日間の実運用フィードバックを待つ）
 
 ### 優先度中
-1. **Vercel Edge Functions** → 本番環境でもAI機能（タグ付け・セマンティック検索）を安全に動かす
+なし（Edge Functions実装完了）
 
 ### 優先度低（将来）
 2. **Capacitorでネイティブ化** → Xcode経由でApp Store申請
@@ -162,7 +162,7 @@ updated_at  timestamptz default now()
 ## 開発コマンド
 
 ```bash
-npm run dev      # 開発サーバー起動
+npm run dev      # 開発サーバー起動（vercel dev：Vite + Edge Functions を同時起動）
 npm run build    # ビルド確認
 ```
 
@@ -170,6 +170,5 @@ npm run build    # ビルド確認
 
 ## セキュリティ注意事項
 
-`VITE_ANTHROPIC_API_KEY` は現在 `dangerouslyAllowBrowser: true` でブラウザから直接呼んでいる。
-ローカル開発専用として運用しており、Vercel本番には設定していない。
-将来的にVercel Edge Functionsへ移行すること。
+`ANTHROPIC_API_KEY` はサーバー側（Edge Function）でのみ使用。ブラウザには露出しない。
+クライアントは `/api/tag`・`/api/search` を呼ぶだけで、APIキーを持たない。
