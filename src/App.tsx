@@ -67,8 +67,12 @@ export default function App() {
   // --- 一覧タブ ---
   const [memos, setMemos] = useState<Memo[]>([])
   const [loadingList, setLoadingList] = useState(false)
-  const [filterTag, setFilterTag] = useState<string | null>(null)
-  const displayedMemos = filterTag ? memos.filter(m => m.tags.includes(filterTag)) : memos
+  const [filterTags, setFilterTags] = useState<string[]>([])
+  const displayedMemos = filterTags.length > 0 ? memos.filter(m => filterTags.every(t => m.tags.includes(t))) : memos
+
+  function toggleFilterTag(tag: string) {
+    setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
 
   // --- 詳細モーダル ---
   const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null)
@@ -264,10 +268,10 @@ export default function App() {
             {retagStatus && (
               <div className="retag-status">{retagStatus}</div>
             )}
-            {filterTag && (
+            {filterTags.length > 0 && (
               <div className="tag-filter-bar">
-                <span># {filterTag} で絞り込み中</span>
-                <button className="tag-filter-clear" onClick={() => setFilterTag(null)}>× クリア</button>
+                <span>{filterTags.map(t => `# ${t}`).join(' & ')} で絞り込み中</span>
+                <button className="tag-filter-clear" onClick={() => setFilterTags([])}>× クリア</button>
               </div>
             )}
             <div className="list-header">
@@ -289,8 +293,8 @@ export default function App() {
                         {m.tags.map(t => (
                           <span
                             key={t}
-                            className={`tag tag-clickable${filterTag === t ? ' tag-active' : ''}`}
-                            onClick={e => { e.stopPropagation(); setFilterTag(t) }}
+                            className={`tag tag-clickable${filterTags.includes(t) ? ' tag-active' : ''}`}
+                            onClick={e => { e.stopPropagation(); toggleFilterTag(t) }}
                           >{t}</span>
                         ))}
                       </span>
