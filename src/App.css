@@ -101,7 +101,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 78svh;
+  max-height: 78svh;
   background: var(--bg);
   border-radius: 20px 20px 0 0;
   border-top: 1px solid var(--border);
@@ -111,6 +111,7 @@
   padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
   z-index: 61;
   animation: sheet-up 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow-y: auto;
 }
 
 @keyframes sheet-up {
@@ -141,7 +142,6 @@
 }
 
 .sheet-content-input {
-  flex: 1;
   padding: 12px;
   font-size: 15px;
   line-height: 1.7;
@@ -153,6 +153,8 @@
   outline: none;
   font-family: var(--sans);
   transition: border-color 0.15s;
+  overflow-y: hidden;
+  min-height: 90px;
 }
 
 .sheet-content-input:focus {
