@@ -1,0 +1,274 @@
+* {
+  box-sizing: border-box;
+}
+
+.app {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ヘッダー */
+.header {
+  padding: 20px 0 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 16px;
+  letter-spacing: 0.02em;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: none;
+  font-size: 15px;
+  color: var(--text);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  color: var(--text-h);
+}
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* メイン */
+.main {
+  flex: 1;
+  padding: 24px 0;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 書くタブ */
+.title-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.title-input:focus {
+  border-color: var(--accent);
+}
+
+.content-input {
+  width: 100%;
+  height: 55vh;
+  padding: 12px;
+  font-size: 15px;
+  line-height: 1.7;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  resize: vertical;
+  outline: none;
+  font-family: var(--sans);
+  transition: border-color 0.15s;
+}
+
+.content-input:focus {
+  border-color: var(--accent);
+}
+
+.save-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ボタン */
+.btn-primary {
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 7px 16px;
+  font-size: 13px;
+  background: none;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* メッセージ */
+.msg {
+  font-size: 14px;
+}
+
+.msg.ok {
+  color: #16a34a;
+}
+
+.msg.err {
+  color: #dc2626;
+}
+
+/* 一覧タブ */
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.list-count {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.loading,
+.empty {
+  text-align: center;
+  color: var(--text);
+  padding: 40px 0;
+  font-size: 15px;
+}
+
+.memo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.memo-item {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  transition: border-color 0.15s;
+}
+
+.memo-item:hover {
+  border-color: var(--accent-border);
+}
+
+.memo-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+  margin-bottom: 6px;
+}
+
+.memo-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.memo-date {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.memo-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-radius: 99px;
+  border: 1px solid var(--accent-border);
+}
+
+.memo-preview {
+  font-size: 13px;
+  color: var(--text);
+  margin: 8px 0 0;
+  line-height: 1.6;
+}
+
+/* 探すタブ */
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+}
+
+.result-count {
+  font-size: 13px;
+  color: var(--text);
+  margin: 0;
+}

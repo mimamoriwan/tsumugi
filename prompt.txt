@@ -1,0 +1,32 @@
+Phase 2：Claude APIによる自動タグ付けを実装してください。
+
+## 仕様
+- 保存ボタンを押したらSupabaseへの保存と同時に
+  Claude APIを呼び出してタグを自動生成する
+- タグ生成中は「タグを生成中...」と表示
+- 生成完了したらタグをSupabaseのtags列に更新して表示
+
+## 実装内容
+1. .env.localに以下を追加
+   VITE_ANTHROPIC_API_KEY=（あとで手動で追加するのでプレースホルダーでOK）
+
+2. src/lib/tagger.tsを新規作成
+   - Claude API（claude-sonnet-4-20250514）を呼び出す関数
+   - プロンプト：
+     「以下のメモに最適な日本語タグを5〜8個生成してください。
+     タグはキーワードレベルで短く、内容を的確に表すものにしてください。
+     JSON配列の文字列のみで返してください。例：["リライト","Pietro","補助金"]
+     
+     タイトル：{title}
+     内容：{content}」
+
+3. src/App.tsxの保存処理を修正
+   - Supabase保存 → tagger.ts呼び出し → tagsをSupabaseに更新
+   の順で実行
+
+## 注意
+- VITE_ANTHROPIC_API_KEY はフロントエンドに直接置くと
+  本番公開時にセキュリティリスクになる。
+  今はローカル開発用途限定として実装し、
+  本番化する際はVercel Edge Functionsに移行することを
+  CLAUDE.mdにTODOとして記載しておく。
