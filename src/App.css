@@ -376,6 +376,21 @@
   border-color: var(--accent);
 }
 
+.autosave-status {
+  font-size: 12px;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.autosave-status.saving {
+  color: var(--text);
+}
+
+.autosave-status.saved {
+  color: #16a34a;
+}
+
 .modal-close {
   padding: 6px 10px;
   font-size: 16px;

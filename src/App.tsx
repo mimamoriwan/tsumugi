@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, type Memo } from './lib/supabase'
 import { generateTags, semanticSearch } from './lib/tagger'
 import './App.css'
@@ -72,36 +72,62 @@ export default function App() {
   const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editContent, setEditContent] = useState('')
-  const [modalSaving, setModalSaving] = useState(false)
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isModalFirstRender = useRef(false)
 
   function openModal(memo: Memo) {
+    isModalFirstRender.current = true
     setSelectedMemo(memo)
     setEditTitle(memo.title)
     setEditContent(memo.content)
+    setAutoSaveStatus('idle')
   }
 
   function closeModal() {
+    if (autoSaveTimer.current) {
+      clearTimeout(autoSaveTimer.current)
+      autoSaveTimer.current = null
+    }
     setSelectedMemo(null)
-  }
-
-  async function handleModalSave() {
-    if (!selectedMemo) return
-    setModalSaving(true)
-    await supabase
-      .from('memos')
-      .update({ title: editTitle.trim(), content: editContent.trim(), updated_at: new Date().toISOString() })
-      .eq('id', selectedMemo.id)
-    setModalSaving(false)
-    closeModal()
-    fetchMemos()
+    setAutoSaveStatus('idle')
   }
 
   async function handleModalDelete() {
     if (!selectedMemo) return
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     await supabase.from('memos').delete().eq('id', selectedMemo.id)
     closeModal()
     fetchMemos()
   }
+
+  useEffect(() => {
+    if (!selectedMemo) return
+    if (isModalFirstRender.current) {
+      isModalFirstRender.current = false
+      return
+    }
+
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    const memoId = selectedMemo.id
+    const titleToSave = editTitle
+    const contentToSave = editContent
+
+    autoSaveTimer.current = setTimeout(async () => {
+      setAutoSaveStatus('saving')
+      await supabase
+        .from('memos')
+        .update({ title: titleToSave.trim(), content: contentToSave.trim(), updated_at: new Date().toISOString() })
+        .eq('id', memoId)
+      setAutoSaveStatus('saved')
+      fetchMemos()
+      setTimeout(() => setAutoSaveStatus(s => s === 'saved' ? 'idle' : s), 2000)
+    }, 1500)
+
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    }
+  }, [editTitle, editContent, selectedMemo])
 
   const fetchMemos = useCallback(async () => {
     setLoadingList(true)
@@ -324,6 +350,8 @@ export default function App() {
                 value={editTitle}
                 onChange={e => setEditTitle(e.target.value)}
               />
+              {autoSaveStatus === 'saving' && <span className="autosave-status saving">保存中...</span>}
+              {autoSaveStatus === 'saved' && <span className="autosave-status saved">✓ 保存済み</span>}
               <button className="modal-close" onClick={closeModal}>✕</button>
             </div>
             <div className="modal-meta">
@@ -341,9 +369,7 @@ export default function App() {
             />
             <div className="modal-footer">
               <button className="btn-danger" onClick={handleModalDelete}>削除</button>
-              <button className="btn-primary" onClick={handleModalSave} disabled={modalSaving}>
-                {modalSaving ? '保存中...' : '保存'}
-              </button>
+              <button className="btn-secondary" onClick={closeModal}>閉じる</button>
             </div>
           </div>
         </div>
