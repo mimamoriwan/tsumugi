@@ -321,3 +321,126 @@
   padding: 8px 12px;
   margin-bottom: 12px;
 }
+
+/* メモカード クリック可能 */
+.memo-item-clickable {
+  cursor: pointer;
+}
+
+/* 詳細モーダル */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90svh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-title-input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.modal-title-input:focus {
+  border-color: var(--accent);
+}
+
+.modal-close {
+  padding: 6px 10px;
+  font-size: 16px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.modal-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.modal-content-input {
+  flex: 1;
+  min-height: 240px;
+  max-height: 50svh;
+  padding: 12px;
+  font-size: 15px;
+  line-height: 1.7;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  resize: vertical;
+  outline: none;
+  font-family: var(--sans);
+  transition: border-color 0.15s;
+}
+
+.modal-content-input:focus {
+  border-color: var(--accent);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-danger {
+  padding: 10px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  background: none;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  color: #fff;
+}

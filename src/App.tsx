@@ -68,6 +68,41 @@ export default function App() {
   const [memos, setMemos] = useState<Memo[]>([])
   const [loadingList, setLoadingList] = useState(false)
 
+  // --- 詳細モーダル ---
+  const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editContent, setEditContent] = useState('')
+  const [modalSaving, setModalSaving] = useState(false)
+
+  function openModal(memo: Memo) {
+    setSelectedMemo(memo)
+    setEditTitle(memo.title)
+    setEditContent(memo.content)
+  }
+
+  function closeModal() {
+    setSelectedMemo(null)
+  }
+
+  async function handleModalSave() {
+    if (!selectedMemo) return
+    setModalSaving(true)
+    await supabase
+      .from('memos')
+      .update({ title: editTitle.trim(), content: editContent.trim(), updated_at: new Date().toISOString() })
+      .eq('id', selectedMemo.id)
+    setModalSaving(false)
+    closeModal()
+    fetchMemos()
+  }
+
+  async function handleModalDelete() {
+    if (!selectedMemo) return
+    await supabase.from('memos').delete().eq('id', selectedMemo.id)
+    closeModal()
+    fetchMemos()
+  }
+
   const fetchMemos = useCallback(async () => {
     setLoadingList(true)
     const { data, error } = await supabase
@@ -211,7 +246,7 @@ export default function App() {
             {!loadingList && memos.length === 0 && <p className="empty">メモがありません</p>}
             <ul className="memo-list">
               {memos.map(m => (
-                <li key={m.id} className="memo-item">
+                <li key={m.id} className="memo-item memo-item-clickable" onClick={() => openModal(m)}>
                   <div className="memo-title">{m.title}</div>
                   <div className="memo-meta">
                     <span className="memo-date">{formatDate(m.created_at)}</span>
@@ -279,6 +314,40 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {selectedMemo && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <input
+                className="modal-title-input"
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+              />
+              <button className="modal-close" onClick={closeModal}>✕</button>
+            </div>
+            <div className="modal-meta">
+              <span className="memo-date">{formatDate(selectedMemo.created_at)}</span>
+              {selectedMemo.tags.length > 0 && (
+                <span className="memo-tags">
+                  {selectedMemo.tags.map(t => <span key={t} className="tag">{t}</span>)}
+                </span>
+              )}
+            </div>
+            <textarea
+              className="modal-content-input"
+              value={editContent}
+              onChange={e => setEditContent(e.target.value)}
+            />
+            <div className="modal-footer">
+              <button className="btn-danger" onClick={handleModalDelete}>削除</button>
+              <button className="btn-primary" onClick={handleModalSave} disabled={modalSaving}>
+                {modalSaving ? '保存中...' : '保存'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
