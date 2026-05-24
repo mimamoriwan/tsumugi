@@ -59,13 +59,16 @@
 tsumugi/
 ├── CLAUDE.md                # このファイル
 ├── src/
-│   ├── App.tsx              # メインUI（3タブ：書く・一覧・探す）
+│   ├── App.tsx              # メインUI（ボトムナビ2タブ＋FABボトムシート）
 │   ├── App.css              # スタイル（ライト/ダークモード対応）
 │   └── lib/
 │       ├── supabase.ts      # Supabaseクライアント + Memo型定義
 │       └── tagger.ts        # Claude API自動タグ付け・セマンティック検索
+├── api/
+│   ├── tag.ts               # Vercel Edge Function：タグ自動生成
+│   └── search.ts            # Vercel Edge Function：AIセマンティック検索
 ├── .env.local               # 環境変数（gitignore済み）
-├── supabase_setup.sql       # テーブル作成SQL（実行済み）
+├── supabase_setup.sql       # テーブル作成SQL＋archivedカラムマイグレーション
 └── vite.config.ts
 ```
 
@@ -105,26 +108,30 @@ id          uuid        primary key, default gen_random_uuid()
 title       text        not null（例：20260524_リライト）
 content     text        not null
 tags        text[]      default '{}'
+archived    boolean     not null, default false
 created_at  timestamptz default now()
 updated_at  timestamptz default now()
 ```
 
 ---
 
-## 実装済み機能（2026年5月24日時点）
+## 実装済み機能（2026年5月25日時点）
 
 | 機能 | 内容 |
 |---|---|
-| メモ保存 | タイトル＋本文をSupabaseに保存 |
-| 自動タグ付け | 保存時にClaude APIが日本語タグを5〜8個生成（Edge Function経由・本番でも動作） |
+| メモ保存 | FABボタン（右下＋）→ボトムシートでタイトル＋本文を入力して保存 |
+| 自動タグ付け | 保存時にClaude APIが日本語タグを5〜8個生成（Vercel Edge Function `/api/tag` 経由） |
 | 未タグ自動補完 | PCブラウザ起動時にtags:[]のメモを一括タグ付け（iPhoneで書いたメモに後からタグをつける） |
 | キーワード検索 | タイトル・本文のilike検索 |
-| AIセマンティック検索 | 自然文でClaudeが意味的に関連するメモを順位付けして返す（Edge Function経由・本番でも動作） |
+| AIセマンティック検索 | 自然文でClaudeが意味的に関連するメモを順位付けして返す（Vercel Edge Function `/api/search` 経由） |
 | 一覧表示 | 新着順・タグ表示 |
 | PWA対応 | iPhoneのホーム画面に追加可能（vite-plugin-pwa・Appleメタタグ・アイコン設定済み） |
-| メモ詳細表示・自動保存 | 一覧からメモをクリックしてモーダルで全文表示・編集（1.5秒デバウンスで自動保存） |
+| メモ詳細表示・自動保存 | 一覧からメモをタップしてモーダルで全文表示・編集（1.5秒デバウンスで自動保存） |
 | メモ削除 | 詳細モーダルから削除可能 |
-| タグ絞り込み | タグをクリックすると同タグのメモを時系列で絞り込み表示・クリアボタンで全件に戻る |
+| 複数タグAND絞り込み | タグをタップするたびに選択タグに追加（AND条件）、再タップで解除、クリアボタンで全件に戻る |
+| 完了フラグ（archived） | 詳細モーダルの「完了済みにする」で一覧から非表示。一覧の「完了済み」ボタンで切替表示 |
+| ボトムナビゲーション | 「一覧」「探す」の2タブをiOSスタイルの下部ナビに配置（safe area対応） |
+| FAB＋ボトムシート入力 | 右下の＋ボタンでボトムシートが出現。本文エリアは入力量に応じて自動拡張 |
 
 ---
 
@@ -132,16 +139,16 @@ updated_at  timestamptz default now()
 
 | 端末 | できること |
 |---|---|
-| iPhone（本番Vercel） | 全機能が使える（Edge Function経由でタグ付け・AI検索も動作） |
+| iPhone（本番Vercel） | 全機能が使える（タグ付け・AI検索ともにEdge Function経由で動作） |
 | PC（vercel dev） | 全機能が使える（Edge Function + Vite をローカルで同時起動） |
+
+※ AI機能はすべてVercel Edge Functions経由のため、iPhoneでもAPIキー不要で動作する。
 
 ---
 
 ## 既知の問題・未実装
 
-| 項目 | 対応方針 |
-|---|---|
-| ~~AI機能が本番で動かない~~ | Vercel Edge Functions実装済み（/api/tag・/api/search）|
+現時点で把握している課題はなし。実運用フィードバックを待つ。
 
 ---
 
@@ -150,12 +157,9 @@ updated_at  timestamptz default now()
 ### 優先度高
 なし（数日間の実運用フィードバックを待つ）
 
-### 優先度中
-なし（Edge Functions実装完了）
-
 ### 優先度低（将来）
-2. **Capacitorでネイティブ化** → Xcode経由でApp Store申請
-3. **マルチデバイス最適化** → iPad・iPhoneでの表示調整
+- **Capacitorでネイティブ化** → Xcode経由でApp Store申請
+- **マルチデバイス最適化** → iPad・iPhoneでの表示調整
 
 ---
 
