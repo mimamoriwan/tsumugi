@@ -3,7 +3,7 @@ import { supabase, type Memo } from './lib/supabase'
 import { generateTags, semanticSearch } from './lib/tagger'
 import './App.css'
 
-type Tab = 'write' | 'list' | 'search'
+type Tab = 'list' | 'search'
 
 function todayPrefix(): string {
   const d = new Date()
@@ -19,13 +19,52 @@ function formatDate(iso: string): string {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('write')
+  const [tab, setTab] = useState<Tab>('list')
+  const [writeSheetOpen, setWriteSheetOpen] = useState(false)
 
-  // --- 書くタブ ---
+  // --- 一覧 ---
+  const [memos, setMemos] = useState<Memo[]>([])
+  const [loadingList, setLoadingList] = useState(false)
+  const [filterTags, setFilterTags] = useState<string[]>([])
+  const [showArchived, setShowArchived] = useState(false)
+  const displayedMemos = filterTags.length > 0 ? memos.filter(m => filterTags.every(t => m.tags.includes(t))) : memos
+
+  function toggleFilterTag(tag: string) {
+    setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
+
+  const fetchMemos = useCallback(async () => {
+    setLoadingList(true)
+    const { data, error } = await supabase
+      .from('memos')
+      .select('*')
+      .eq('archived', showArchived)
+      .order('created_at', { ascending: false })
+    setLoadingList(false)
+    if (!error && data) setMemos(data as Memo[])
+  }, [showArchived])
+
+  useEffect(() => {
+    if (tab === 'list') fetchMemos()
+  }, [tab, fetchMemos])
+
+  // --- 書くシート ---
   const [title, setTitle] = useState(todayPrefix())
   const [content, setContent] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
+
+  function openWriteSheet() {
+    setTitle(todayPrefix())
+    setContent('')
+    setSaveMsg('')
+    setWriteSheetOpen(true)
+  }
+
+  function closeWriteSheet() {
+    setWriteSheetOpen(false)
+    setSaveMsg('')
+  }
 
   async function handleSave() {
     if (!title.trim() || !content.trim()) {
@@ -35,7 +74,6 @@ export default function App() {
     setSaving(true)
     setSaveMsg('')
 
-    // 1. Supabase に保存して id を取得
     const { data: inserted, error } = await supabase
       .from('memos')
       .insert({ title: title.trim(), content: content.trim() })
@@ -50,29 +88,17 @@ export default function App() {
 
     setSaveMsg('タグを生成中...')
 
-    // 2. Claude API でタグ生成
     try {
       const tags = await generateTags(title.trim(), content.trim())
       await supabase.from('memos').update({ tags }).eq('id', inserted.id)
-      setSaveMsg('保存しました（タグ付け完了）')
     } catch {
-      setSaveMsg('保存しました（タグ生成に失敗）')
+      // タグ生成失敗は無視して保存完了扱い
     }
 
     setSaving(false)
-    setTitle(todayPrefix())
-    setContent('')
-  }
-
-  // --- 一覧タブ ---
-  const [memos, setMemos] = useState<Memo[]>([])
-  const [loadingList, setLoadingList] = useState(false)
-  const [filterTags, setFilterTags] = useState<string[]>([])
-  const [showArchived, setShowArchived] = useState(false)
-  const displayedMemos = filterTags.length > 0 ? memos.filter(m => filterTags.every(t => m.tags.includes(t))) : memos
-
-  function toggleFilterTag(tag: string) {
-    setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+    setWriteSheetOpen(false)
+    setSaveMsg('')
+    if (tab === 'list') fetchMemos()
   }
 
   // --- 詳細モーダル ---
@@ -144,22 +170,7 @@ export default function App() {
     }
   }, [editTitle, editContent, selectedMemo])
 
-  const fetchMemos = useCallback(async () => {
-    setLoadingList(true)
-    const query = supabase
-      .from('memos')
-      .select('*')
-      .eq('archived', showArchived)
-      .order('created_at', { ascending: false })
-    const { data, error } = await query
-    setLoadingList(false)
-    if (!error && data) setMemos(data as Memo[])
-  }, [showArchived])
-
-  useEffect(() => {
-    if (tab === 'list') fetchMemos()
-  }, [tab, fetchMemos])
-
+  // --- 未タグ自動補完（PC限定） ---
   const [retagStatus, setRetagStatus] = useState<string | null>(null)
 
   useEffect(() => {
@@ -184,9 +195,7 @@ export default function App() {
           await supabase.from('memos').update({ tags }).eq('id', memo.id)
           done++
           setRetagStatus(`タグ付け中... ${done}/${untagged.length} 件完了`)
-          setMemos(prev =>
-            prev.map(m => m.id === memo.id ? { ...m, tags } : m)
-          )
+          setMemos(prev => prev.map(m => m.id === memo.id ? { ...m, tags } : m))
         } catch {
           // 1件失敗しても続行
         }
@@ -245,35 +254,9 @@ export default function App() {
       </header>
 
       <main className="main">
-        {tab === 'write' && (
-          <div className="pane">
-            <input
-              className="title-input"
-              type="text"
-              placeholder="タイトル"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-            />
-            <textarea
-              className="content-input"
-              placeholder="ここに書く..."
-              value={content}
-              onChange={e => setContent(e.target.value)}
-            />
-            <div className="save-row">
-              <button className="btn-primary" onClick={handleSave} disabled={saving}>
-                {saving ? '保存中...' : '保存'}
-              </button>
-              {saveMsg && <span className={saveMsg.startsWith('保存しました') ? 'msg ok' : 'msg err'}>{saveMsg}</span>}
-            </div>
-          </div>
-        )}
-
         {tab === 'list' && (
           <div className="pane">
-            {retagStatus && (
-              <div className="retag-status">{retagStatus}</div>
-            )}
+            {retagStatus && <div className="retag-status">{retagStatus}</div>}
             {filterTags.length > 0 && (
               <div className="tag-filter-bar">
                 <span>{filterTags.map(t => `# ${t}`).join(' & ')} で絞り込み中</span>
@@ -371,12 +354,50 @@ export default function App() {
         )}
       </main>
 
+      {/* FABボタン */}
+      <button className="fab" onClick={openWriteSheet} aria-label="新規メモ">＋</button>
+
+      {/* ボトムナビ */}
       <nav className="bottom-nav">
-        <button className={tab === 'write' ? 'tab active' : 'tab'} onClick={() => setTab('write')}>書く</button>
         <button className={tab === 'list' ? 'tab active' : 'tab'} onClick={() => setTab('list')}>一覧</button>
         <button className={tab === 'search' ? 'tab active' : 'tab'} onClick={() => setTab('search')}>探す</button>
       </nav>
 
+      {/* 書くボトムシート */}
+      {writeSheetOpen && (
+        <>
+          <div className="sheet-overlay" onClick={closeWriteSheet} />
+          <div className="write-sheet">
+            <div className="sheet-handle" />
+            <div className="sheet-header">
+              <span className="sheet-title">新規メモ</span>
+              <button className="modal-close" onClick={closeWriteSheet}>✕</button>
+            </div>
+            <input
+              className="title-input"
+              type="text"
+              placeholder="タイトル"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              autoFocus
+            />
+            <textarea
+              className="sheet-content-input"
+              placeholder="ここに書く..."
+              value={content}
+              onChange={e => setContent(e.target.value)}
+            />
+            <div className="save-row">
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? '保存中...' : '保存'}
+              </button>
+              {saveMsg && <span className={saveMsg.startsWith('保存') && !saveMsg.includes('失敗') ? 'msg ok' : 'msg err'}>{saveMsg}</span>}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 詳細モーダル */}
       {selectedMemo && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
