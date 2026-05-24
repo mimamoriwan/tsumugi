@@ -327,6 +327,50 @@
   cursor: pointer;
 }
 
+/* タグ絞り込みバー */
+.tag-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.tag-filter-clear {
+  font-size: 12px;
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.tag-filter-clear:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* タグ クリック可能 */
+.tag-clickable {
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tag-clickable:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tag-active {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* 詳細モーダル */
 .modal-overlay {
   position: fixed;

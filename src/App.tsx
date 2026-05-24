@@ -67,6 +67,8 @@ export default function App() {
   // --- 一覧タブ ---
   const [memos, setMemos] = useState<Memo[]>([])
   const [loadingList, setLoadingList] = useState(false)
+  const [filterTag, setFilterTag] = useState<string | null>(null)
+  const displayedMemos = filterTag ? memos.filter(m => m.tags.includes(filterTag)) : memos
 
   // --- 詳細モーダル ---
   const [selectedMemo, setSelectedMemo] = useState<Memo | null>(null)
@@ -262,23 +264,35 @@ export default function App() {
             {retagStatus && (
               <div className="retag-status">{retagStatus}</div>
             )}
+            {filterTag && (
+              <div className="tag-filter-bar">
+                <span># {filterTag} で絞り込み中</span>
+                <button className="tag-filter-clear" onClick={() => setFilterTag(null)}>× クリア</button>
+              </div>
+            )}
             <div className="list-header">
-              <span className="list-count">{memos.length} 件</span>
+              <span className="list-count">{displayedMemos.length} 件</span>
               <button className="btn-secondary" onClick={fetchMemos} disabled={loadingList}>
                 {loadingList ? '読込中...' : '更新'}
               </button>
             </div>
             {loadingList && <p className="loading">読み込み中...</p>}
-            {!loadingList && memos.length === 0 && <p className="empty">メモがありません</p>}
+            {!loadingList && displayedMemos.length === 0 && <p className="empty">メモがありません</p>}
             <ul className="memo-list">
-              {memos.map(m => (
+              {displayedMemos.map(m => (
                 <li key={m.id} className="memo-item memo-item-clickable" onClick={() => openModal(m)}>
                   <div className="memo-title">{m.title}</div>
                   <div className="memo-meta">
                     <span className="memo-date">{formatDate(m.created_at)}</span>
                     {m.tags.length > 0 && (
                       <span className="memo-tags">
-                        {m.tags.map(t => <span key={t} className="tag">{t}</span>)}
+                        {m.tags.map(t => (
+                          <span
+                            key={t}
+                            className={`tag tag-clickable${filterTag === t ? ' tag-active' : ''}`}
+                            onClick={e => { e.stopPropagation(); setFilterTag(t) }}
+                          >{t}</span>
+                        ))}
                       </span>
                     )}
                   </div>
