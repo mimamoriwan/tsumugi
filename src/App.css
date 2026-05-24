@@ -272,3 +272,13 @@
   color: var(--text);
   margin: 0;
 }
+
+.retag-status {
+  font-size: 13px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}

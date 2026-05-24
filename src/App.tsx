@@ -82,6 +82,45 @@ export default function App() {
     if (tab === 'list') fetchMemos()
   }, [tab, fetchMemos])
 
+  const [retagStatus, setRetagStatus] = useState<string | null>(null)
+
+  useEffect(() => {
+    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
+    if (!apiKey) return
+
+    const retagUntagged = async () => {
+      const { data: untagged, error } = await supabase
+        .from('memos')
+        .select('*')
+        .eq('tags', '{}')
+        .order('created_at', { ascending: false })
+
+      if (error || !untagged || untagged.length === 0) return
+
+      setRetagStatus(`タグなしメモ ${untagged.length} 件を自動タグ付け中...`)
+
+      let done = 0
+      for (const memo of untagged as Memo[]) {
+        try {
+          const tags = await generateTags(memo.title, memo.content)
+          await supabase.from('memos').update({ tags }).eq('id', memo.id)
+          done++
+          setRetagStatus(`タグ付け中... ${done}/${untagged.length} 件完了`)
+          setMemos(prev =>
+            prev.map(m => m.id === memo.id ? { ...m, tags } : m)
+          )
+        } catch {
+          // 1件失敗しても続行
+        }
+      }
+
+      setRetagStatus(`✓ ${done} 件のタグ付けが完了しました`)
+      setTimeout(() => setRetagStatus(null), 4000)
+    }
+
+    retagUntagged()
+  }, [])
+
   // --- 探すタブ ---
   const [keyword, setKeyword] = useState('')
   const [results, setResults] = useState<Memo[]>([])
@@ -138,6 +177,9 @@ export default function App() {
 
         {tab === 'list' && (
           <div className="pane">
+            {retagStatus && (
+              <div className="retag-status">{retagStatus}</div>
+            )}
             <div className="list-header">
               <span className="list-count">{memos.length} 件</span>
               <button className="btn-secondary" onClick={fetchMemos} disabled={loadingList}>
