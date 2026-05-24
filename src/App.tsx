@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, type Memo } from './lib/supabase'
-import { generateTags } from './lib/tagger'
+import { generateTags, semanticSearch } from './lib/tagger'
 import './App.css'
 
 type Tab = 'write' | 'list' | 'search'
@@ -125,6 +125,9 @@ export default function App() {
   const [keyword, setKeyword] = useState('')
   const [results, setResults] = useState<Memo[]>([])
   const [searching, setSearching] = useState(false)
+  const [searchMode, setSearchMode] = useState<'keyword' | 'ai'>('keyword')
+
+  const hasApiKey = !!import.meta.env.VITE_ANTHROPIC_API_KEY
 
   async function handleSearch() {
     if (!keyword.trim()) return
@@ -137,6 +140,24 @@ export default function App() {
       .order('created_at', { ascending: false })
     setSearching(false)
     if (!error && data) setResults(data as Memo[])
+  }
+
+  async function handleAiSearch() {
+    if (!keyword.trim()) return
+    setSearching(true)
+    const { data, error } = await supabase
+      .from('memos')
+      .select('id, title, tags')
+      .order('created_at', { ascending: false })
+    if (error || !data) { setSearching(false); return }
+
+    const ids = await semanticSearch(keyword.trim(), data as Array<{ id: string; title: string; tags: string[] }>)
+
+    const { data: allMemos } = await supabase.from('memos').select('*')
+    setSearching(false)
+    if (!allMemos) return
+    const memoMap = new Map((allMemos as Memo[]).map(m => [m.id, m]))
+    setResults(ids.flatMap(id => memoMap.has(id) ? [memoMap.get(id)!] : []))
   }
 
   return (
@@ -208,6 +229,19 @@ export default function App() {
 
         {tab === 'search' && (
           <div className="pane">
+            <div className="search-mode-row">
+              <button
+                className={searchMode === 'keyword' ? 'mode-btn active' : 'mode-btn'}
+                onClick={() => setSearchMode('keyword')}
+              >キーワード</button>
+              <button
+                className={searchMode === 'ai' ? 'mode-btn active' : 'mode-btn'}
+                onClick={() => setSearchMode('ai')}
+                disabled={!hasApiKey}
+                title={!hasApiKey ? '（PCでのみ利用可）' : undefined}
+              >AIで探す</button>
+              {!hasApiKey && <span className="mode-hint">（PCでのみ利用可）</span>}
+            </div>
             <div className="search-row">
               <input
                 className="search-input"
@@ -215,10 +249,14 @@ export default function App() {
                 placeholder="キーワードを入力..."
                 value={keyword}
                 onChange={e => setKeyword(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                onKeyDown={e => e.key === 'Enter' && (searchMode === 'ai' ? handleAiSearch() : handleSearch())}
               />
-              <button className="btn-primary" onClick={handleSearch} disabled={searching}>
-                {searching ? '検索中...' : '検索'}
+              <button
+                className="btn-primary"
+                onClick={searchMode === 'ai' ? handleAiSearch : handleSearch}
+                disabled={searching}
+              >
+                {searching ? '検索中...' : searchMode === 'ai' ? 'AIで探す' : '検索'}
               </button>
             </div>
             {results.length > 0 && <p className="result-count">{results.length} 件見つかりました</p>}
