@@ -170,6 +170,13 @@ export default function App() {
     }
   }, [editTitle, editContent, selectedMemo])
 
+  // シート・モーダルが開いている間 body スクロールをロック
+  useEffect(() => {
+    const isOpen = writeSheetOpen || selectedMemo !== null
+    document.body.style.overflow = isOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [writeSheetOpen, selectedMemo])
+
   // --- 未タグ自動補完（PC限定） ---
   const [retagStatus, setRetagStatus] = useState<string | null>(null)
 
