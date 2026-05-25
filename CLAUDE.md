@@ -113,6 +113,11 @@ created_at  timestamptz default now()
 updated_at  timestamptz default now()
 ```
 
+### マイグレーション履歴
+| 実施日 | 内容 | 状態 |
+|---|---|---|
+| 2026-05-25 | `archived` カラム追加 | **Supabase SQL Editorで手動実行が必要**（`supabase_setup.sql` 末尾のSQL参照） |
+
 ---
 
 ## 実装済み機能（2026年5月25日時点）
