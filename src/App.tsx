@@ -392,12 +392,7 @@ export default function App() {
               className="sheet-content-input"
               placeholder="ここに書く..."
               value={content}
-              rows={3}
-              onChange={e => {
-                setContent(e.target.value)
-                e.target.style.height = 'auto'
-                e.target.style.height = e.target.scrollHeight + 'px'
-              }}
+              onChange={e => setContent(e.target.value)}
             />
             <div className="save-row">
               <button className="btn-primary" onClick={handleSave} disabled={saving}>
